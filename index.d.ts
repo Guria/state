@@ -4,6 +4,8 @@ export {
   getPagePath,
   openPage,
   redirectPage,
+  openPath,
+  redirectPath,
   Router,
   Page
 } from './create-router/index.js'

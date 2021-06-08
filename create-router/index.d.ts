@@ -58,18 +58,6 @@ export interface Router<AppPages extends Pages = Pages>
    * Converted routes.
    */
   routes: [string, RegExp, (...params: string[]) => object, string?][]
-
-  /**
-   * Open URL without page reloading.
-   *
-   * ```js
-   * router.open('/posts/guides/10')
-   * ```
-   *
-   * @param path Absolute URL (`https://example.com/a`)
-   *             or domain-less URL (`/a`).
-   */
-  open(path: string): void
 }
 
 /**
@@ -97,6 +85,42 @@ export interface Router<AppPages extends Pages = Pages>
 export function createRouter<AppPages extends Pages>(
   routes: Routes<AppPages>
 ): Router<AppPages>
+
+/**
+ * Open URL without page reloading using path, pushing new histoy item.
+ * Will have effect only if it matches possible routes passed to router instance.
+ *
+ * ```js
+ * import { openPage } from '@logux/state'
+ *
+ * openPath(router, '/posts/guides/10')
+ * ```
+ *
+ * @param path Absolute URL (`https://example.com/a`)
+ *             or domain-less URL (`/a`).
+ */
+export function openPath<AppPages extends Pages>(
+  router: Router<AppPages>,
+  path: string
+): void
+
+/**
+ * Open URL without page reloading using path, replacing current history item.
+ * Will have effect only if it matches possible routes passed to router instance.
+ *
+ * ```js
+ * import { redirectPath } from '@logux/state'
+ *
+ * redirectPath(router, '/posts/guides/10')
+ * ```
+ *
+ * @param path Absolute URL (`https://example.com/a`)
+ *             or domain-less URL (`/a`).
+ */
+export function redirectPath<AppPages extends Pages>(
+  router: Router<AppPages>,
+  path: string
+): void
 
 /**
  * Open page by name and parameters. Pushes new state into history.

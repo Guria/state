@@ -2,6 +2,8 @@ export {
   createRouter,
   openPage,
   redirectPage,
+  openPath,
+  redirectPath,
   getPagePath
 } from './create-router/index.js'
 export { clean, cleanStores } from './clean-stores/index.js'

@@ -18,7 +18,6 @@ router.subscribe(page => {
   if (!page) {
     console.log('404')
   } else if (page.route === 'post') {
-    router.open(`/post/${page.params.id}`)
     openPage(router, 'post', { id: '1' })
     openPage(router, 'home')
     redirectPage(router, 'post', { id: '1' })

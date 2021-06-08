@@ -1,4 +1,10 @@
-import { createRouter, openPage, redirectPage } from '../index.js'
+import {
+  createRouter,
+  openPage,
+  redirectPage,
+  openPath,
+  redirectPath
+} from '../index.js'
 
 interface Routes {
   home: void
@@ -18,10 +24,7 @@ let router = createRouter<Routes>({
 router.subscribe(page => {
   if (!page) {
     console.log('404')
-  } else if (page.route === 'post') {
-    // THROWS 'type' does not exist on type 'Params<"id">'
-    router.open(`/post/${page.params.type}`)
-    // THROWS '"home" | "create" | "exit"' and '"creat"' have no overlap.
+    // THROWS '"home" | "create" | "post" | "exit"' and '"creat"' have no overlap.
   } else if (page.route === 'creat') {
     console.log('create')
   }
@@ -31,6 +34,11 @@ router.subscribe(page => {
   // THROWS Object is possibly 'undefined'
   console.log(page.route)
 })
+
+// THROWS Expected 2 arguments, but got 1
+openPath(router)
+// THROWS Expected 2 arguments, but got 1
+redirectPath(router)
 
 // THROWS category: string; }' is not assignable to parameter
 openPage(router, 'post', { id: '1', category: 'guides' })

@@ -1,4 +1,5 @@
 import { createStore } from '../create-store/index.js'
+import { bindDomEvents } from './bind-dom-events.js'
 
 export function createRouter(routes) {
   let normalized = Object.keys(routes).map(name => {
@@ -25,7 +26,8 @@ export function createRouter(routes) {
   })
 
   let prev
-  let parse = path => {
+  let parse = url => {
+    let path = url.pathname
     path = path.replace(/\/$/, '') || '/'
     if (prev === path) return false
     prev = path
@@ -38,67 +40,37 @@ export function createRouter(routes) {
     }
   }
 
-  let click = event => {
-    let link = event.target.closest('a')
-    if (
-      !event.defaultPrevented &&
-      link &&
-      event.button === 0 &&
-      link.target !== '_blank' &&
-      link.dataset.noRouter == null &&
-      link.rel !== 'external' &&
-      !link.download &&
-      !event.metaKey &&
-      !event.ctrlKey &&
-      !event.shiftKey &&
-      !event.altKey
-    ) {
-      let url = new URL(link.href)
-      if (url.origin === location.origin) {
-        event.preventDefault()
-        let changed = location.hash !== url.hash
-        router.open(url.pathname)
-        if (changed) {
-          location.hash = url.hash
-          if (url.hash === '' || url.hash === '#') {
-            window.dispatchEvent(new HashChangeEvent('hashchange'))
-          }
-        }
+  let router = createStore(() => {
+    let navigate = (urlOrPath, historyMethod) => {
+      let url = urlOrPath.href ? urlOrPath : new URL(urlOrPath, location.origin)
+      let parsed = parse(url)
+      if (parsed !== false) {
+        set(parsed)
+        historyMethod && historyMethod.call(history, null, null, url.href)
       }
     }
-  }
+    let init = bindDomEvents(navigate)
+    let clean = init()
+    router.open = navigate
+    router.routes = normalized
 
-  let popstate = () => {
-    let page = parse(location.pathname)
-    if (page !== false) set(page)
-  }
+    if (process.env.NODE_ENV !== 'production') {
+      delete router.set
+      router.open = (path, historyMethod) => {
+        if (typeof historyMethod !== 'function') {
+          throw new Error('direct call of router.open is not supported')
+        }
+        navigate(path, historyMethod)
+      }
+    }
 
-  let router = createStore(() => {
-    let page = parse(location.pathname)
-    if (page !== false) set(page)
-    document.body.addEventListener('click', click)
-    window.addEventListener('popstate', popstate)
     return () => {
       prev = undefined
-      document.body.removeEventListener('click', click)
-      window.removeEventListener('popstate', popstate)
+      clean()
     }
   })
 
-  router.routes = normalized
-
   let set = router.set
-  if (process.env.NODE_ENV !== 'production') {
-    delete router.set
-  }
-
-  router.open = (path, redirect) => {
-    let page = parse(path)
-    if (page !== false) {
-      history[redirect ? 'replaceState' : 'pushState'](null, null, path)
-      set(page)
-    }
-  }
 
   return router
 }
@@ -111,10 +83,18 @@ export function getPagePath(router, name, params) {
   return route[3].replace(/\/:\w+/g, i => '/' + params[i.slice(2)])
 }
 
+export function openPath(router, path) {
+  router.open(path, history.pushState)
+}
+
+export function redirectPath(router, path) {
+  router.open(path, history.replaceState)
+}
+
 export function openPage(router, name, params) {
-  router.open(getPagePath(router, name, params))
+  router.open(getPagePath(router, name, params), history.pushState)
 }
 
 export function redirectPage(router, name, params) {
-  router.open(getPagePath(router, name, params), true)
+  router.open(getPagePath(router, name, params), history.replaceState)
 }

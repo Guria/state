@@ -5,6 +5,8 @@ import {
   cleanStores,
   getPagePath,
   getValue,
+  openPath,
+  redirectPath,
   openPage,
   redirectPage
 } from '../index.js'
@@ -291,26 +293,13 @@ it('respects download attribute', () => {
   expect(getValue(router)?.path).toEqual('/')
 })
 
-it('opens URLs manually', () => {
+it('throws on open URLs manually', () => {
   changePath('/posts/guides/10/')
-  let events = listen()
 
-  router.open('/posts/')
-  expect(location.href).toEqual('http://localhost/posts/')
-  expect(getValue(router)).toEqual({
-    path: '/posts',
-    route: 'posts',
-    params: {}
-  })
-  expect(events).toEqual(['/posts'])
-})
-
-it('ignores the same URL in manual URL', () => {
-  changePath('/posts/guides/10')
-  let events = listen()
-
-  router.open('/posts/guides/10')
-  expect(events).toEqual([])
+  // @ts-expect-error
+  expect(() => router.open('/posts/')).toThrow('not supported')
+  // @ts-expect-error
+  expect(() => router.open('/posts/', true)).toThrow('not supported')
 })
 
 it('allows RegExp routes', () => {
@@ -330,7 +319,43 @@ it('generates URLs', () => {
   ).toEqual('/posts/guides/1')
 })
 
-it('opens URLs manually by route name, pushing new stare', () => {
+it('opens URLs manually by path, pushing new state', () => {
+  let start = history.length
+  changePath('/')
+  listen()
+  openPath(router, '/posts/guides/10')
+  expect(history.length - start).toEqual(2)
+
+  expect(location.href).toEqual('http://localhost/posts/guides/10')
+  expect(getValue(router)).toEqual({
+    path: '/posts/guides/10',
+    route: 'post',
+    params: {
+      categoryId: 'guides',
+      id: '10'
+    }
+  })
+})
+
+it('opens URLs manually by path, replacing state', () => {
+  let start = history.length
+  changePath('/')
+  listen()
+  redirectPath(router, '/posts/guides/10')
+  expect(history.length - start).toEqual(1)
+
+  expect(location.href).toEqual('http://localhost/posts/guides/10')
+  expect(getValue(router)).toEqual({
+    path: '/posts/guides/10',
+    route: 'post',
+    params: {
+      categoryId: 'guides',
+      id: '10'
+    }
+  })
+})
+
+it('opens URLs manually by route name, pushing new state', () => {
   let start = history.length
   changePath('/')
   listen()
